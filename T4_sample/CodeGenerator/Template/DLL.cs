@@ -7,7 +7,7 @@ using CodeGenerator.Model;
 
 namespace CodeGenerator.Template
 {
-    partial class DLLTemp 
+    partial class DLLTemp : Interface
     {
         public string Namespace { get; set; }
         public string ClassName { get; set; }

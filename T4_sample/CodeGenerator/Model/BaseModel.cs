@@ -19,5 +19,6 @@ namespace CodeGenerator.Model
 
         public string ModelName { get; set; }
 
+        public string TypeName { get; set; }
     }
 }
