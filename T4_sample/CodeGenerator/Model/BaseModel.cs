@@ -17,6 +17,8 @@ namespace CodeGenerator.Model
         /// </summary>
         public string DataAccessContext { get; set; }
 
+
+
         public string ModelName { get; set; }
 
         public string TypeName { get; set; }
