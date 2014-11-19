@@ -27,7 +27,7 @@ namespace <#= this.Namespace #>
         #endregion
 
         #region Constructor
-        public ActivityBoardDao()
+        public <#= this.ClassName #>()
         {
             param = new List<object>();
         }
@@ -42,7 +42,7 @@ namespace <#= this.Namespace #>
 	            {
 		            try
                     {
-                        #region Table Content
+                        #region TODO Add Table 
                         string contentId = Guid.NewGuid().ToString();
                         param.Add(new SqlParameter("@ContentID", contentId));
                         param.Add(new SqlParameter("@ContentTypeID", ContentTypeModel.CONTENT_TYPE_測試用));
@@ -54,23 +54,8 @@ namespace <#= this.Namespace #>
                         param.Add(new SqlParameter("@Creator", model.Updater ?? "system"));
                         param.Add(new SqlParameter("@Updater", model.Updater ?? "system"));
                         db.Database.ExecuteSqlCommand(@" 
-                            INSERT INTO Content(ID, ContentTypeID, Name, Description, IsPublish, OpenTime, CloseTime,  Creator, CreateTime, Updater, UpdateTime)
+                            INSERT INTO Table(ID, ContentTypeID, Name, Description, IsPublish, OpenTime, CloseTime,  Creator, CreateTime, Updater, UpdateTime)
                             VALUES (@ContentID, @ContentTypeID, @Name, @Description, @IsPublish, @OpenTime, @CloseTime , @Creator, GETDATE(), @Updater, GETDATE());",
-                            param.ToArray());
-
-                        #endregion
-
-                        #region Table ActivityBoard
-                        string activityBoardId = Guid.NewGuid().ToString();
-                        param.Clear();
-                        param.Add(new SqlParameter("@ID", activityBoardId));
-                        param.Add(new SqlParameter("@ContentID", contentId));
-                        param.Add(new SqlParameter("@CategoryID", model.ContentID ?? CategoryModel.測試用類別));
-                        param.Add(new SqlParameter("@DisplayRatio", model.DisplayRatio));
-                        param.Add(new SqlParameter("@PlayTime", model.PlayTime));
-                        db.Database.ExecuteSqlCommand(@" 
-                            INSERT INTO ActivityBoard(ID, ContentID, CategoryID, DisplayRatio, PlayTime)
-                            VALUES (@ID, @ContentID, @CategoryID, @DisplayRatio, @PlayTime);",
                             param.ToArray());
 
                         #endregion
@@ -88,7 +73,7 @@ namespace <#= this.Namespace #>
 	        }
         }
 
-        public bool UpdateActivityBoard(<#= this.ModelName #> model)
+        public bool Update(<#= this.ModelName #> model)
         {
             using (<#= this.DataAccessContext #> db = new <#= this.DataAccessContext #>())
             {
@@ -96,59 +81,18 @@ namespace <#= this.Namespace #>
                 {
                     try
                     {
-                        #region Table Content
+                        #region TODO Update Table 
 
                         param.Add(new SqlParameter("@ID", model.ContentID));
                         param.Add(new SqlParameter("@Name", model.Name));
-                        param.Add(new SqlParameter("@Description", model.Description ?? (object)DBNull.Value));
-                        param.Add(new SqlParameter("@OpenTime", model.OpenTime));
-                        param.Add(new SqlParameter("@CloseTime", model.CloseTime));
-                        param.Add(new SqlParameter("@IsPublish", model.IsPublic));
                         param.Add(new SqlParameter("@Updater", model.Updater ?? "system"));
                         db.Database.ExecuteSqlCommand(@" 
-                            UPDATE Content
+                            UPDATE Table
                             SET Name = @Name,
-                                IsPublish = @IsPublish, 
-                                Description = @Description,
-                                OpenTime = @OpenTime,
-                                CloseTime = @Closetime,
 					            Updater = @Updater, 
                                 UpdateTime = GETDATE()
                             WHERE ID = @ID;",
                             param.ToArray());
-
-                        #endregion
-
-                        #region Table ActivityBoard
-
-                        param.Clear();
-                        param.Add(new SqlParameter("@ID", model.ContentID));
-                        param.Add(new SqlParameter("@CategoryID", CategoryModel.測試用類別));
-                        param.Add(new SqlParameter("@DisplayRatio", model.DisplayRatio));
-                        param.Add(new SqlParameter("@PlayTime", model.PlayTime));
-                        db.Database.ExecuteSqlCommand(@" 
-                            UPDATE ActivityBoard
-                            SET CategoryID = @CategoryID,
-                                DisplayRatio = @DisplayRatio, 
-                                PlayTime = @PlayTime
-                            WHERE ID = @ID;",
-                            param.ToArray());
-
-                        #endregion
-
-                        #region Table FileUpload
-
-                        //刪除區域相關上傳檔案
-                        db.Database.ExecuteSqlCommand(@" 
-                            delete FileUpload
-                            where ContentID = @ContentID",
-                            new SqlParameter("@ContentID", model.ContentID));
-                        if (model.PicUrl != null && !string.IsNullOrEmpty(model.PicUrl.FileName))
-                        {
-                            //新增照片
-                            fileUploadDao.InsertFileUpload
-                                (model.ContentID, FileUploadModel.上傳測試類別, model.Updater, model.PicUrl, db);
-                        }
 
                         #endregion
 
@@ -165,7 +109,7 @@ namespace <#= this.Namespace #>
             }
         }
 
-        public bool DeleteActivityBoard(string id)
+        public bool Delete(string id)
         {
             using(<#= this.DataAccessContext #> db = new <#= this.DataAccessContext #>())
             {
@@ -173,24 +117,24 @@ namespace <#= this.Namespace #>
 	            {
 		            try
                     {
-                        #region Get ContentID
+                        #region TODO Get ContentID
                         param.Add(new SqlParameter("@ID", id));
                         string contentId = db.Database.SqlQuery<string>(@" 
                             select ContentID
-                            from ActivityBoard
+                            from Table
                             where ID = @ID;",
                         param.ToArray()).Single();
                         #endregion
 
-                        #region Drop all 
+                        #region TODO Drop all 
                         param.Clear();
                         param.Add(new SqlParameter("@ContentID", contentId));
                         param.Add(new SqlParameter("@ID", id));
                         db.Database.ExecuteSqlCommand(@"
-                            DELETE FileUpload WHERE ContentID = @ContentID;
-                            DELETE ClickRecord WHERE ContentID = @ContentID;
-                            DELETE ActivityBoard WHERE ID = @ID;
-                            DELETE Content WHERE ID = @ContentID;
+                            DELETE Table WHERE ContentID = @ContentID;
+                            DELETE Table WHERE ContentID = @ContentID;
+                            DELETE Table WHERE ID = @ID;
+                            DELETE Table WHERE ID = @ContentID;
                             ",
                             param.ToArray());
                         #endregion
@@ -219,29 +163,15 @@ namespace <#= this.Namespace #>
                     StringBuilder sql = new StringBuilder();
                     #endregion
 
+					#region TODO GetAll
                     sql.AppendFormat(@"
-		                    SELECT
-			                    a.ID,
-                                a.ContentID,
-                                a.DisplayRatio,
-                                a.PlayTime,
-                                c.Name Category,
-                                cnt.IsPublish IsPublic,
-                                cnt.Name,
-                                cnt.Description,
-                                cnt.OpenTime,
-                                cnt.CloseTime
-		                    FROM ActivityBoard a 
-                            inner join Content cnt on cnt.ID = ContentID
-                            inner join Category c on c.ID = a.CategoryID
-                            ORDER BY cnt.Name
+							SELECT
+			                    *
+		                    FROM Table
+                            ORDER BY UpdateTime
 	                    ");
                     colViewData = db.Database.SqlQuery<<#= this.ModelName #>>(sql.ToString(), param.ToArray()).ToList();
-
-                    foreach (<#= this.ModelName #> item in colViewData)
-                    {
-                        item.PicUrl = fileUploadDao.GetFileUploadByid(item.ID);
-                    }
+					#endregion
                 }
             }
             catch (Exception e)
@@ -277,13 +207,13 @@ namespace <#= this.Namespace #>
                     StringBuilder sql = new StringBuilder();
                     #endregion
                     
-                    #region 欄位排序用
+                    #region TODO 欄位排序用
                     string[] colOrder = { "cnt.UpdateTime", "cnt.Name", "c.Name", "cnt.OpenTime", "a.DisplayRatio" };
                     string orderTitle = (model != null && (colOrder.Length > model.OrderNum)) ? colOrder[model.OrderNum] : colOrder[0];
                     string order = (model != null) ? (model.Order ? "ASC" : "DESC") : "ASC";
                     #endregion//
 
-                    #region 關鍵字篩選
+                    #region TODO 關鍵字篩選
                     string condition = string.Empty;
                     List<string> lstWhere = new List<string>();
 
@@ -307,25 +237,14 @@ namespace <#= this.Namespace #>
                         condition = string.Format(" WHERE {0} ", string.Join(" AND ", lstWhere.ToArray()));
                     #endregion
 
+					#region TODO GetAll
                     sql.AppendFormat(@"
 	                    select *
 	                    from (
-		                    SELECT
-			                    a.ID,
-                                a.ContentID,
-                                a.DisplayRatio,
-                                a.PlayTime,
-                                c.Name Category,
-                                cnt.IsPublish IsPublic,
-                                cnt.Name,
-                                cnt.Description,
-                                cnt.OpenTime,
-                                cnt.CloseTime,
+		                    SELECT *,
 			                    ROW_NUMBER() OVER ( ORDER BY {0} {1} ) RN,
                                 COUNT(*) OVER () TotalNum
-		                    FROM ActivityBoard a 
-                            inner join Content cnt on cnt.ID = ContentID
-                            inner join Category c on c.ID = a.CategoryID
+		                    FROM Table 
                             {2}
 	                    ) data
                         WHERE RN BETWEEN @MIN AND @MAX ORDER BY RN
@@ -334,11 +253,7 @@ namespace <#= this.Namespace #>
                     order,
                     condition);
                     colViewData = db.Database.SqlQuery<<#= this.ModelName #>>(sql.ToString(), param.ToArray()).ToList();
-
-                    foreach (<#= this.ModelName #> item in colViewData) 
-                    {
-                        item.PicUrl = fileUploadDao.GetFileUploadByid(item.ID);
-                    }
+					#endregion
                 }
             }
             catch (Exception e)
@@ -351,29 +266,19 @@ namespace <#= this.Namespace #>
 
         public <#= this.ModelName #> GetById(string Id)
         {
-
             <#= this.ModelName #> colViewData = new <#= this.ModelName #>();
             try
             {
                 using (<#= this.DataAccessContext #> db = new <#= this.DataAccessContext #>())
                 {
+					#region TODO GetById
                     colViewData = db.Database.SqlQuery<<#= this.ModelName #>>(@"
                         SELECT
-			                a.ID,
-                            a.ContentID,
-                            a.DisplayRatio,
-                            a.PlayTime,
-                            cnt.IsPublish IsPublic,
-                            cnt.Name,
-                            cnt.Description,
-                            cnt.OpenTime,
-                            cnt.CloseTime
-		                FROM ActivityBoard a 
-                        left join content cnt on cnt.ID = ContentID
+			                *
+		                FROM Table a 
                         WHERE a.ID = @ID"
                         , new SqlParameter("@ID", Id)).Single();
-
-                    colViewData.PicUrl = fileUploadDao.GetFileUploadByid(Id);
+					#endregion
                 }
             }
             catch (Exception e)
